@@ -292,18 +292,11 @@ let minimapTick = 0;
 const TICK_MS = 10;
 const MINIMAP_INTERVAL = 500; // send minimap every 500ms
 
-let lastFood = [];
-let pendingEaten = []; // { foodId, eaterId }
-
 setInterval(() => {
   tickId++;
-  game.update();
+  const { eatenWithEater } = game.update();
 
-  // Collect newly spawned food (tracked via game._lastSpawned if needed)
-  // For simplicity: diff food maps
   const scoreUpdates = [];
-  const eatenWithEater = [];
-
   for (const [ws, worm] of wsToWorm) {
     if (!worm.alive) continue;
     scoreUpdates.push({
@@ -323,8 +316,8 @@ setInterval(() => {
       y: worm.y,
       abilities: [],
     };
-    // Position updates for other worms
     const pkt = buildMsg1(tickId, game.gameMode, {
+      eatenFoodsWithEater: eatenWithEater,
       scoreUpdates,
       selfUpdate,
     });
