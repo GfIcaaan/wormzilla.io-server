@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8"/>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, maximum-scale=1, minimal-ui, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+
+  <title>Wormzilla.io – Multiplayer Snake Game Online</title>
+  <meta name="description" content="Play Wormzilla.io – multiplayer snake game in your browser. Eat bugs, sweets and energy orbs, unlock skins, and dominate the leaderboard."/>
+  <meta name="keywords" content="wormzilla, wormzilla.io, wormate, wormateio, io game, snake game, worm game, mmo, multiplayer, online game"/>
+  <link rel="canonical" href="https://wormzilla.io/"/>
+
+  <!-- Google image preview permission -->
+  <meta name="robots" content="max-image-preview:large"/>
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Wormzilla.io – Multiplayer Snake Game"/>
+  <meta property="og:description" content="Grow, unlock skins, and fight for the leaderboard in Wormzilla.io!"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="Wormzilla.io"/>
+  <meta property="og:url" content="https://wormzilla.io/"/>
+
+  <meta property="og:image" content="https://wormzilla.io/img/og-share-img-3.png"/>
+  <meta property="og:image:secure_url" content="https://wormzilla.io/img/og-share-img-3.png"/>
+  <meta property="og:image:type" content="image/png"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="Wormzilla.io – Multiplayer Snake Game Online"/>
+  <meta name="twitter:description" content="Eat, grow and dominate the arena in Wormzilla.io."/>
+  <meta name="twitter:image" content="https://wormzilla.io/img/og-share-img-3.png"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com/"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet"/>
+  <link rel="icon" href="https://wormzilla.io/img/favicon.png"/>
+  <link rel="stylesheet" href="/style.css"/>
+  <link rel="manifest" href="manifest.json"/>
+  <!-- Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "VideoGame",
+    "name": "Wormzilla.io",
+    "url": "https://wormzilla.io/",
+    "image": "https://wormzilla.io/img/og-share-img-3.png",
+    "description": "Browser-based multiplayer snake game. Eat bugs and energy, unlock skins, climb the leaderboard.",
+    "genre": ["Multiplayer", "MMO", "Snake Game", "Arcade"],
+    "operatingSystem": "Any modern web browser",
+    "applicationCategory": "Game",
+    "publisher": { "@type": "Organization", "name": "Wormzilla.io" }
+  }
+  </script>
+  <!-- Google tag (gtag.js) -->
+  
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-RX0B0WH5PN');
+  </script>
+<script>
+(function() {
+  try {
+    var existing = localStorage.getItem("wtr_config");
+    if (existing) {
+      // cek apakah sudah ada token
+      var s = parseInt(existing.slice(0,2), 16);
+      var out = "";
+      for (var i = 2; i < existing.length; i += 2) {
+        s = (3793 + 4513 * s) & 255;
+        out += String.fromCharCode(parseInt(existing.slice(i, i+2), 16) ^ s);
+      }
+      try {
+        var obj = JSON.parse(decodeURIComponent(out));
+        if (obj.authToken && obj.authToken !== 0) return; // sudah ada token
+      } catch(e) {}
+    }
+    // Inject guest token
+    function enc(obj) {
+      var r = encodeURIComponent(JSON.stringify(obj));
+      var s = 42, n = s.toString(16).padStart(2,"0");
+      for (var a = 0; a < r.length; ++a) {
+        s = (3793 + 4513 * s) & 255;
+        n += (r.charCodeAt(a) ^ s).toString(16).padStart(2,"0");
+      }
+      return n;
+    }
+    localStorage.setItem("wtr_config", enc({"1r":238,"authToken":"guesttoken123"}));
+  } catch(e) {}
+})();
+</script>
+</head>
+
+
+<body class="auth-locked"><div id="wz-center-loader" class="wzil active" aria-live="polite">
+    <div class="wzil-wrap">
+      <div class="wzil-card">
+        <img src="/img/logo.webp" class="wzil-logo" alt="Wormzilla"/>
+        <div class="wzil-art">
+          <svg viewbox="0 0 120 120" class="wzil-svg" aria-hidden="true">
+            <defs>
+              <lineargradient id="wzilgrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#2ee9ff"/>
+                <stop offset="1" stop-color="#00b6ff"/>
+              </lineargradient>
+            </defs>
+            <circle cx="60" cy="60" r="42" class="wzil-track"/>
+            <circle cx="60" cy="60" r="42" class="wzil-worm"/>
+          </svg>
+          <div class="wzil-pct" id="wzilPct">0%</div>
+        </div>
+        <div class="wzil-bar">
+          <div class="wzil-fill" id="wzilFill"></div>
+        </div>
+        <div class="wzil-tip" id="wzilTip">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+  <div class="app is-loading" id="app">
+    <div class="stage-wrap">
+      <!-- === GAME OVERLAY  === -->
+      <div class="game-wrap" id="gameWrap" aria-hidden="true">
+        <div class="game-stage" id="gameStage">
+          <div class="announce-container">
+            <div class="notice-title">NOTICE</div>
+            <span class="announce-text"></span>
+          </div>
+          <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div id="gamePortal" aria-live="polite">
+          <div class="portal-wrap">
+            <div class="portal-card">
+              <div class="portal-title">Entering Arena</div>
+              <svg class="portal-ring" viewbox="0 0 120 120" aria-hidden="true">
+                <defs>
+                  <lineargradient id="portalGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#4da3ff"/>
+                    <stop offset="1" stop-color="#2ee9ff"/>
+                  </lineargradient>
+                </defs>
+                <circle cx="60" cy="60" r="42" class="portal-track"></circle>
+                <circle cx="60" cy="60" r="42" class="portal-worm"></circle>
+              </svg>
+              <div class="portal-bar">
+                <div class="portal-fill" id="portalFill"></div>
+              </div>
+              <div class="portal-msg" id="portalMsg">Preparing…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <div class="stage" id="stage">
+        <header>
+          <a href="https://wormzilla.io/" class="header-logo"><img src="/img/bbaa1.webp" alt=""/>         
+          </a>
+         
+          <div class="header-buttons">
+            <button class="header-btn settings-btn">Settings</button>
+            <button class="header-btn store-btn">Store</button>
+            <button class="header-btn lead-btn">Leaderboard</button>
+            <!-- <a href="https://buymeacoffee.com/wormzilla.io/e/465653" class="header-btn buy-btn" id="buyBtn">Buy</a> -->
+            <button class="header-btn exit-btn">
+              LOG OUT 
+            </button>
+          </div>
+        </header>
+        <div class="shell">
+          <div class="panel">
+            <div class="logo-item"><img src="/img/logo.webp" alt=""/></div>
+            <div class="rklm-box">
+              <img src="/img/ads.png" alt="" style="width: 100%; height: 100%"/>
+            </div>
+            <!-- ===================== STREAMER MARQUEE (DUPLICATED CONTENT FOR SEAMLESS LOOP) ===================== -->
+            <div class="streamer-item marquee" id="streamerMarquee">
+              <div class="marquee__inner" id="streamer-cont">
+                <!-- GROUP 1 -->
+                <a href="#" class="streamer-link">
+                  <img src="/" alt="" class="streamer-img"/>
+                </a>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div id="homeMain" hidden="">
+              <!-- LOGIN -->
+              <div class="panel center-panel" id="centerPanel">
+                <div id="wz-center-loader" class="wzil" aria-live="polite">
+                  <div class="wzil-card">
+                    <img src="/img/logo.webp" class="wzil-logo" alt="Wormzilla"/>
+                    <div class="wzil-art">
+                      <svg viewbox="0 0 120 120" class="wzil-svg" aria-hidden="true">
+                        <defs>
+                          <lineargradient id="wzilgrad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0" stop-color="#2ee9ff"></stop>
+                            <stop offset="1" stop-color="#00b6ff"></stop>
+                          </lineargradient>
+                        </defs>
+                        <circle cx="60" cy="60" r="42" class="wzil-track"></circle>
+                        <circle cx="60" cy="60" r="42" class="wzil-worm"></circle>
+                      </svg>
+                      <div class="wzil-pct" id="wzilPct">100%</div>
+                    </div>
+                    <div class="wzil-bar">
+                      <div class="wzil-fill" id="wzilFill" style="width: 100%"></div>
+                    </div>
+                    <div class="wzil-tip" id="wzilTip">Ready!</div>
+                  </div>
+                </div>
+
+                <div class="center-top">
+                  <div class="home-center-skins">
+                    <img src="/img/skinsbg.jpg" alt="" class="skins-bg"/>
+                    <canvas id="skin-prev-canvas"></canvas>
+                    <button class="home-skins-btn home-skins-prev">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="27" height="46" viewbox="0 0 27 46" fill="none">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M25.8284 44.5C24.2663 46.0841 21.7337 46.0841 20.1716 44.5L1.17156 25.8934C-0.390536 24.3093 -0.390536 21.7409 1.17156 20.1568L20.1716 1.18807C21.7337 -0.396027 24.2663 -0.396026 25.8284 1.18807C27.3905 2.77217 27.3905 5.3405 25.8284 6.9246L9.65684 23.0251L25.8284 38.7635C27.3905 40.3476 27.3905 42.9159 25.8284 44.5Z" fill="#9CFF68"></path>
+                      </svg>
+                    </button>
+                    <button class="home-skins-btn home-skins-next">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="27" height="46" viewbox="0 0 27 46" fill="none">
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M1.17158 1.18808C2.73368 -0.396019 5.26634 -0.396019 6.82843 1.18808L25.8284 19.7947C27.3905 21.3788 27.3905 23.9471 25.8284 25.5312L6.82843 44.5C5.26633 46.0841 2.73367 46.0841 1.17157 44.5C-0.390524 42.9159 -0.390524 40.3476 1.17157 38.7635L17.3432 22.663L1.17158 6.92461C-0.390517 5.34051 -0.390517 2.77218 1.17158 1.18808Z" fill="#9CFF68"></path>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="center-controls">
+                    <button class="play-game-btn">PLAY NOW</button>
+
+                    <div class="home-center-buttons">
+                      <button class="full-screen-btn h-btn">
+                        <img src="/img/fullscreen.png" alt=""/>Fullscreen
+                      </button>
+                      <button class="replay-btn h-btn">
+                        <img src="/img/rplay.png" alt=""/>PLAY AGAIN
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="center-bottom" data-selected-server="eu">
+                  <div class="home-center-server-map">
+                    <p class="server-map eu" data-a="eu">Europe</p>
+                    <p class="server-map as" data-a="as">Asia</p>
+                    <p class="server-map na" data-a="na">NA</p>
+                    <p class="server-map sa" data-a="sa">SA</p>
+                  </div>
+
+                  <div class="home-center-server-list" id="server-eu">
+                    <div class="server-item">
+                      <div class="server-name">
+                        <div class="server-img">
+                          <img src="https://flagcdn.com/w40/fr.png" alt="FR"/>
+                        </div>
+                        <div class="server-city">Turkey — Ankara</div>
+                      </div>
+                      <div class="server-info">
+                        <div class="server-online">
+                          <span class="server-player">PLAYERS</span>
+                          <span class="server-count">238</span>
+                        </div>
+                        <div class="server-range">
+                          <span class="server-range-fill"></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="home-center-server-list" id="server-as">
+                  
+                  </div>
+
+                  <div class="home-center-server-list" id="server-na">
+                  
+                  </div>
+                  <div class="home-center-server-list" id="server-sa">
+                  
+                  </div>
+                </div>
+              </div>
+
+
+            </div>
+
+            <div id="homeAuth" class="home-auth">
+              <div class="home-auth-inner">
+                <div class="ha-head">
+                  <h3>Welcome to Wormzilla</h3>
+                  <img src="/img/logo.webp" alt="Wormzilla" class="ha-logo"/>
+                </div>
+
+                <!-- STEP 1: ONLY GOOGLE -->
+                <div id="stepGoogle" class="ha-card ha-step active">
+                  <button id="btnGoogle"></button>
+                  <div class="ha-hint">
+                    Sign in to sync skins &amp; progress.
+                  </div>
+                </div>
+
+                <!-- STEP 2: REGISTER (only if account not found) -->
+                <div id="stepRegister" class="ha-card ha-step">
+                  <label class="ha-lab" for="regName">Nickname</label>
+                  <input id="regName" class="ha-field" type="text" maxlength="20" placeholder="Type your name"/>
+
+                  <div class="ha-accepts">
+                    <label class="ha-accept">
+                      <input type="checkbox" id="regTerms"/>
+                      <span>I accept the    <a href="/privacy.html" target="_blank" class="accept-policy-link">Privacy Policy &amp; Terms.</a></span>
+                    </label>
+                    <label class="ha-accept">
+                      <input type="checkbox" id="regNameRules"/>
+                      <span>I understand the nickname is one-time and cannot be
+                        changed.</span>
+                    </label>
+                  </div>
+                  <div id="turnstile-container" style="display:none"></div>
+                  <div class="ha-error" id="regError"></div>
+                  <button class="ha-btn primary" id="btnRegister" disabled="">
+                    Create Account
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="player-card">
+              <div class="pi-top">
+                <div class="avatar">
+                  <img src="/img/K.png" alt=""/>
+                </div>
+                <div class="pi-name">
+                  <h3 id="p-name">PLAYER NAME</h3>
+                  <span class="badge">VIP</span>
+                </div>
+              </div>
+              <div class="pi-rows">
+                <div class="pi-row">
+                  <div class="label">Level</div>
+                  <div id="p-level" class="value">0</div>
+                </div>
+                <div class="pi-row vip-only">
+                  <div class="label">VIP Expires</div>
+                  <div id="vip-expire" class="value">2025-12-12 16:43</div>
+                </div>
+                <div class="pi-row">
+                  <div class="label">Kills</div>
+                  <div id="p-kills" class="value">0</div>
+                </div>
+                <div class="pi-row">
+                  <div class="label">Headshots</div>
+                  <div id="p-hs" class="value">0</div>
+                </div>
+                <div class="pi-row">
+                  <div class="label">Points</div>
+                  <div id="p-points" class="value">0</div>
+                </div>
+                <div class="pi-row">
+                  <div class="label">Name Tokens</div>
+                  <div class="value">
+                    <span id="nameTokenCount" class="change-token-no">0</span>
+                  </div>
+                  <button class="change-name-btn">
+                    <img src="/img/rplay.png" alt=""/>
+                    Change
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="vip-card">
+              <div class="vip-content-container">
+                
+                <div class="vip-section">
+                  <h2 class="vip-title">VIP</h2>
+                  <p class="vip-desc">Unlock exclusive premium features and special privileges.</p>
+                  <a href="https://buymeacoffee.com/wormzilla.io/e/465653" class="pri">Buy VIP</a>
+                </div>
+            
+                <div class="vip-section">
+                  <h2 class="vip-title">NAME CARD</h2>
+                  <p class="vip-desc">Change your username up to five times.</p>
+                  <a href="https://buymeacoffee.com/wormzilla.io/e/493053" class="pri">Buy Name Card</a>
+                </div>
+                <div class="vip-section">
+                  <h2 class="vip-title">5x SKINS</h2>
+                  <p class="vip-desc">custom skins package</p>
+                  <a href="https://buymeacoffee.com/wormzilla.io/e/494874" class="pri">Buy 5x Skins</a>
+                </div>
+            
+              </div>
+            </div>
+            <div class="about-card" id="aboutCard" hidden>
+              <div class="about-head">
+                <img src="/img/logo.webp" alt="Wormzilla" class="about-logo"/>
+                <h3>Welcome to Wormzilla</h3>
+              </div>
+
+              <div class="about-scroll">
+                <h4>About the Game</h4>
+                <p>
+                  Wormzilla.io was built for fun. Grow your worm by eating
+                  various foods on the map and power up with items that grant
+                  special abilities.
+                </p>
+
+                <h4>Support &amp; VIP</h4>
+                <p>
+                  To support the project and unlock new looks (plus upload
+                  your own custom skin) consider a VIP subscription for an
+                  ad-free experience. Ads help us cover costs and keep
+                  development going.
+                </p>
+
+                <h4>Classic, Reimagined</h4>
+                <p>
+                  Wormzilla is entertainment-first — a modern take on the
+                  classic snake game you may remember from old mobile phones.
+                </p>
+
+                <h4>Community Guidelines</h4>
+                <ul>
+                  <li>
+                    No discrimination of any kind (race, religion, language,
+                    color).
+                  </li>
+                  <li>
+                    No harassment, hate speech, profanity, NSFW or terror
+                    content.
+                  </li>
+                  <li>Respect other players and play fair.</li>
+                </ul>
+                <p>
+                  Violations lead to permanent bans, even for VIP members.
+                </p>
+
+                <p style="margin-top: 12px">
+                  Have fun and good luck in the arena!<br/>
+                  <strong>— Samet &amp; Can</strong>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <!-- ================= SETTINGS ================= -->
+<div class="settings-wrap" id="settingsWrap" aria-hidden="true">
+  <div class="settings-overlay" data-close></div>
+  <div class="settings-modal" role="dialog" aria-modal="true" aria-label="Wormzilla Settings">
+    <div class="settings-head">
+      <button id="settings-close" class="backbtn" title="Back"></button>
+      <h3>Settings</h3>
+      <div class="vip-pill">VIP</div>
+    </div>
+
+    <div class="tabbar" id="settings-tabs">
+      <button class="tab active" data-tab="general">General</button>
+      <button class="tab" data-tab="audio">Audio</button>
+      <button class="tab" data-tab="visual">Visual</button>
+      <button class="tab" data-tab="controls">Controls</button>
+      <button class="tab" data-tab="shortcuts">Shortcuts</button>
+      <button class="tab" data-tab="perf">Performance</button>
+    </div>
+
+    <div class="settings-body">
+      <!-- GENERAL -->
+      <section class="sectionS active" id="tab-general">
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">ID</div>
+            <div class="hint">Player identifier</div>
+          </div>
+          <div class="opR">
+            <input id="playerId" class="field" type="text" value="" readonly/>
+            <button class="copyBtn" id="copyId">COPY</button>
+          </div>
+        </div>
+
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Background</div>
+            <div class="hint">Choose built-in background</div>
+          </div>
+          <div class="opR">
+            <select id="select-bg" class="field ui-select">
+              
+            </select>
+          </div>
+        </div>
+
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Background (custom)</div>
+            <div class="hint">Upload your own</div>
+          </div>
+          <div class="opR fileish">
+            <input type="file" id="bgFile" accept="image/*" hidden/>
+            <label class="btnGhost" for="bgFile">Choose</label>
+            <span class="fileName" id="bgFileName">No file selected</span>
+          </div>
+        </div>
+
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Cursor</div>
+          </div>
+          <div class="opR">
+            <select id="select-cursor" class="field ui-select">
+              <option class="ui-option" value="0">Default</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Top</div>
+            <div class="hint">Leaderboard top N</div>
+          </div>
+          <div class="opR">
+            <select id="select-top" class="field ui-select">
+              <option class="ui-option" value="1">1</option>
+              <option class="ui-option" value="2">2</option>
+              <option class="ui-option" value="3">3</option>
+              <option class="ui-option" value="4">4</option>
+              <option class="ui-option" value="5">5</option>
+              <option class="ui-option" value="6">6</option>
+              <option class="ui-option" value="7">7</option>
+              <option class="ui-option" value="8">8</option>
+              <option class="ui-option" value="9">9</option>
+              <option class="ui-option" value="10">10</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="opt vip-sc">
+          <div class="opL">
+            <div class="opT">Skin</div>
+          </div>
+          <div class="opR fileish">
+            <input type="file" id="skinFile" accept=".json" hidden/>
+            <label class="btnGhost" for="skinFile">Choose</label>
+            <span class="fileName" id="skinFileName">No file selected</span>
+          </div>
+          <div class="vip-a">Vip</div>
+
+        </div>
+
+        <div class="opt vip-sc">
+          <div class="opL">
+            <div class="opT">Wear</div>
+          </div>
+          <div class="opR fileish">
+            <input type="file" id="wearFile" accept=".json" hidden/>
+            <label class="btnGhost" for="wearFile">Choose</label>
+            <span class="fileName" id="wearFileName">No file selected</span>
+          </div>
+          <div class="vip-a">Vip</div>
+
+        </div>
+      </section>
+
+      <!-- AUDIO -->
+      <section class="sectionS" id="tab-audio">
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Headshot sound</div>
+          </div>
+          <div class="opR">
+            <select class="field ui-select" id="hsSel">
+              
+            </select>
+            <div class="fileish" style="flex: 1">
+              <input type="file" id="hsFile" accept="audio/*" hidden/>
+              <label class="btnGhost" for="hsFile">Upload</label>
+              <span class="fileName" id="hsFileName">No file selected</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">10× Headshot sound</div>
+          </div>
+          <div class="opR">
+            <select class="field ui-select" id="hs10Sel">
+              
+            </select>
+            <div class="fileish" style="flex: 1">
+              <input type="file" id="hs10File" accept="audio/*" hidden/>
+              <label class="btnGhost" for="hs10File">Upload</label>
+              <span class="fileName" id="hs10FileName">No file selected</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="opt vip-sc">
+          <div class="opL">
+            <div class="opT">Team help sound</div>
+          </div>
+          <div class="opR">
+            <label class="switch"><input id="team-help" type="checkbox" checked/></label>
+          </div>
+          <div class="vip-a">Vip</div>
+
+        </div>
+      </section>
+
+      <!-- VISUAL -->
+      <section class="sectionS" id="tab-visual">
+        <div class="opt vip-sc">
+          <div class="opL">
+            <div class="opT">Map color</div>
+          </div>
+          <div class="opR">
+            <input type="color" id="mapColor" value="#2e45ff" class="field" style="max-width: 120px; padding: 0; height: 42px"/>
+            <div class="val" id="mapColorHex">#2E45FF</div>
+          </div>
+          <div class="vip-a">Vip</div>
+        </div>
+        <div class="opt vip-sc">
+          <div class="opL">
+            <div class="opT">Team color</div>
+          </div>
+          <div class="opR">
+            <input type="color" id="teamColor" value="#20ff43" class="field" style="max-width: 120px; padding: 0; height: 42px"/>
+            <div class="val" id="teamColorHex">#20FF43</div>
+          </div>
+          <div class="vip-a">Vip</div>
+
+        </div>
+        <div class="opt vip-sc">
+          <div class="opL">
+            <div class="opT">Nick font color</div>
+          </div>
+          <div class="opR">
+            <input type="color" id="nickColor" value="#ff2b2b" class="field" style="max-width: 120px; padding: 0; height: 42px"/>
+            <div class="val" id="nickColorHex">#FF2B2B</div>
+          </div>
+          <div class="vip-a">Vip</div>
+
+        </div>
+      </section>
+
+      <!-- CONTROLS -->
+      <section class="sectionS" id="tab-controls">
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Show abilities</div>
+          </div>
+          <div class="opR">
+            <select id="show-abilities" class="field ui-select">
+              <option class="ui-option" value="0">OFF</option>
+              <option class="ui-option" value="1">ESSENTIAL</option>
+              <option class="ui-option" value="2">FULL</option>
+            </select>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Mobile circle</div>
+          </div>
+          <div class="opR">
+            <label class="switch"><input id="mobile-circle" type="checkbox" checked/></label>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Nickname profanity filter</div>
+          </div>
+          <div class="opR">
+            <label class="switch"><input id="nick-profanity" type="checkbox" checked/></label>
+          </div>
+        </div>
+        <div class="opt vip-sc">
+          <div class="opL">
+            <div class="opT">Team code</div>
+          </div>
+          <div class="opR">
+            <input id="team-code" class="field" type="number" value="45545" min="0"/>
+          </div>
+          <div class="vip-a">Vip</div>
+
+        </div>
+      </section>
+
+      <!-- SHORTCUTS -->
+      <section class="sectionS" id="tab-shortcuts">
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">Q</div>
+            <div class="field" readonly>AFK</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">SCROLL / NUMPAD +,-</div>
+            <div class="field" readonly>Zoom</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">F</div>
+            <div class="field" readonly>
+              Next skin (Minimum 2 skin)
+            </div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">G</div>
+            <div class="field" readonly>Next hat (Minimum 2 Hat)</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">R</div>
+            <div class="field" readonly>Play again</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">H (MOBILE SOS BTN)</div>
+            <div class="field" readonly>Help team</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">Z</div>
+            <div class="field" readonly>Reset zoom</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">C</div>
+            <div class="field" readonly>Next background</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">J</div>
+            <div class="field" readonly>Auto skin change</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">N</div>
+            <div class="field" readonly>Toggle nicknames</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">L</div>
+            <div class="field" readonly>Lazer open/close</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opR keyRow">
+            <div class="key">SHIFT + MOUSE</div>
+            <div class="field" readonly>UI Drag &amp; Drop</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PERFORMANCE -->
+      <section class="sectionS" id="tab-perf">
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Low resolution</div>
+          </div>
+          <div class="opR">
+            <label class="switch"><input id="low-res" type="checkbox"/></label>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Ultra Low resolution</div>
+          </div>
+          <div class="opR">
+            <label class="switch"><input id="ultra-low-res" type="checkbox"/></label>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Zoom multiplier</div>
+            <div class="hint">Steps: .25 / .50 / .75 / 1.00</div>
+          </div>
+          <div class="opR sliderWrap">
+            <input class="range" type="range" min="0.25" max="1" step="0.25" value="0.25" id="zoomMul"/>
+            <div class="val" id="zoomMulOut">0.25</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Minimum zoom</div>
+            <div class="hint">Steps: .25 / .50 / .75 / 1.00</div>
+          </div>
+          <div class="opR sliderWrap">
+            <input class="range" type="range" min="0.25" max="1" step="0.25" value="0.25" id="zoomMin"/>
+            <div class="val" id="zoomMinOut">0.25</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Food size</div>
+            <div class="hint">Steps: .25 / .50 / .75 / 1.00</div>
+          </div>
+          <div class="opR sliderWrap">
+            <input class="range" type="range" min="0.25" max="3" step="0.25" value="1.00" id="foodSize"/>
+            <div class="val" id="foodSizeOut">1.00</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Item size</div>
+            <div class="hint">Steps: .25 / .50 / .75 / 1.00</div>
+          </div>
+          <div class="opR sliderWrap">
+            <input class="range" type="range" min="0.25" max="3" step="0.25" value="1.00" id="itemSize"/>
+            <div class="val" id="itemSizeOut">1.00</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Headshot list</div>
+          </div>
+          <div class="opR">
+            <label class="switch"><input type="checkbox" id="hsList"/></label>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Headshot record list</div>
+          </div>
+          <div class="opR">
+            <label class="switch"><input type="checkbox" id="hsRecList"/></label>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Nick font size</div>
+          </div>
+          <div class="opR sliderWrap">
+            <input class="range" type="range" min="10" max="36" step="1" value="22" id="nickSize"/>
+            <div class="val" id="nickSizeOut">22</div>
+          </div>
+        </div>
+        <div class="opt">
+          <div class="opL">
+            <div class="opT">Use WebGPU renderer</div>
+          </div>
+          <div class="opR">
+            <label class="switch"><input type="checkbox" id="wgpu"/></label>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+        <!-- LEADERBOARD -->
+        <div class="lb-wrap" id="lbWrap" aria-hidden="true">
+          <div class="lb-overlay" data-close></div>
+          <div class="lb-modal" role="dialog" aria-modal="true" aria-label="Leaderboard">
+            <div class="lb-head">
+              <button class="lb-back" data-close title="Back"></button>
+              <h3>Leaderboard</h3>
+            </div>
+            <div class="lb-body">
+              <div class="lb-table">
+                <div class="lb-th">
+                  <button class="lb-thc lb-left" data-sort="0">#</button>
+                  <button class="lb-thc lb-left" data-sort="0">
+                    GENERAL
+                  </button>
+                  <button class="lb-thc" data-sort="1">KILLS</button>
+                  <button class="lb-thc" data-sort="2">POINT</button>
+                  <button class="lb-thc" data-sort="3">HS</button>
+                  <button class="lb-thc" data-sort="4">LVL</button>
+                </div>
+                <div id="lbRows"></div>
+              </div>
+            </div>
+            <div class="lb-foot">
+              <div class="lb-row lb-meRow" id="lbMeRow"></div>
+            </div>
+          </div>
+        </div>
+        <!-- ========= STORE MODAL ========= -->
+
+        <div id="wzs-store" aria-hidden="true">
+          <div class="wzs-dim" data-close></div>
+
+          <div class="wzs-modal" role="dialog" aria-modal="true" aria-label="Store">
+            <div class="wzs-head">
+              <button id="close-store" class="wzs-back"></button>
+              <h3 class="wzs-title" id="wzsTitle">Store — Accessories</h3>
+
+              <!-- Wallet (coins + satın alma aç) -->
+              <div class="wzs-wallet">
+                <img src="/img/Coin.png" class="wzs-coin-img" aria-hidden="true" alt=""/>
+                <span class="wzs-amount" id="wzsCoins">12,000</span>
+                <button class="wzs-topup" id="wzsTopupBtn" aria-haspopup="dialog" aria-controls="wzsPay">
+                  Get Coins
+                </button>
+              </div>
+            </div>
+
+            <div class="wzs-tabs">
+              <button id="store-wears" class="wzs-pill active" data-view="acc">
+                Accessories
+              </button>
+              <button id="store-skins" class="wzs-pill" data-view="skins">Skins</button>
+            </div>
+
+            <div class="wzs-body">
+              <!-- ACCESSORIES -->
+              <div class="wzs-view active" id="wzs-acc">
+                <div class="wzs-shell">
+                  <aside class="wzs-side">
+                    <h5>Groups</h5>
+                    <div id="wzsAccGroups" class="wzs-vlist">
+                      <button id="store-eyes" class="wzs-vbtn active">
+                        Eyes
+                      </button>
+                      <button id="store-mouth" class="wzs-vbtn">Mouth</button>
+                      <button id="store-glasses" class="wzs-vbtn">
+                        Glasses
+                      </button>
+                      <button id="store-hat" class="wzs-vbtn">Hat</button>
+                    </div>
+                  </aside>
+
+                  <section class="wzs-stage">
+                    <div class="wzs-canvas">
+                      <button id="wzsAccPrev" class="wzs-arrow left" aria-label="Prev">
+                        <svg viewbox="0 0 24 24">
+                          <path d="M15 4 L7 12 L15 20"/>
+                        </svg>
+                      </button>
+                      <canvas id="wzsAccCanvas" width="900" height="280"></canvas>
+                      <button id="wzsAccNext" class="wzs-arrow right" aria-label="Next">
+                        <svg viewbox="0 0 24 24">
+                          <path d="M9 4 L17 12 L9 20"/>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div class="wzs-ctrl">
+                      <div class="wzs-meta" id="wzsAccMeta">
+                        
+                      </div>
+                      <button class="wzs-add" id="wzsAccAdd">Add</button>
+                      <button class="wzs-rem" id="wzsAccRemove">
+                        Remove
+                      </button>
+                      <button class="wzs-select" id="wzsAccSelect">
+                        Select
+                      </button>
+                      <div class="wzs-lock" id="wzsAccLocked">
+                        Locked
+                      </div>
+                    </div>
+
+                    <div id="acc-buybar" class="wzs-buybar">
+                      <div class="wzs-price">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>
+                        <span id="wzsAccPrice">12,000</span>
+                      </div>
+                      <button class="wzs-buy" id="wzsAccBuy">Buy</button>
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <!-- SKINS -->
+              <div class="wzs-view" id="wzs-skins">
+                <div class="wzs-shell">
+                  <aside class="wzs-side">
+                    <h5>Categories</h5>
+                    <div id="wzsSkinCats" class="wzs-vlist">
+                      <!-- JS ile dolar -->
+                    </div>
+                  </aside>
+
+                  <section class="wzs-stage">
+                    <div class="wzs-canvas">
+                      <button id="wzsSkinPrev" class="wzs-arrow left" aria-label="Prev">
+                        <svg viewbox="0 0 24 24">
+                          <path d="M15 4 L7 12 L15 20"/>
+                        </svg>
+                      </button>
+                      <canvas id="wzsSkinCanvas" width="900" height="280"></canvas>
+                      <button id="wzsSkinNext" class="wzs-arrow right" aria-label="Next">
+                        <svg viewbox="0 0 24 24">
+                          <path d="M9 4 L17 12 L9 20"/>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <div class="wzs-ctrl">
+                      <div class="wzs-meta" id="wzsSkinMeta">ID: 0</div>
+                      <button class="wzs-add" id="wzsSkinAdd">Add</button>
+                      <button class="wzs-rem" id="wzsSkinRemove">
+                        Remove
+                      </button>
+                      <button class="wzs-select" id="wzsSkinSelect">
+                        Select
+                      </button>
+                      <div class="wzs-lock" id="wzsSkinLocked">
+                        Locked
+                      </div>
+                    </div>
+
+                    <div id="skin-buybar" class="wzs-buybar">
+                      <div class="wzs-price">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>
+                        <span id="wzsSkinPrice">25,000</span>
+                      </div>
+                      <button class="wzs-buy" id="wzsSkinBuy">Buy</button>
+                    </div>
+                  </section>
+                </div>
+              </div>
+            </div>
+
+            <!-- Satın Alma POPUP -->
+            <div class="wzs-pay" id="wzsPay" aria-hidden="true">
+              <div class="wzs-pay-dim" data-close></div>
+              <div class="wzs-pay-panel" role="dialog" aria-modal="true" aria-labelledby="wzsPayTitle">
+                <div class="wzs-pay-head">
+                  <h4 id="wzsPayTitle">Get Coins</h4>
+                  <button class="wzs-pay-close" data-close aria-label="Close"></button>
+                </div>
+
+                <div class="wzs-pack-grid">
+                  <div class="wzs-pack">
+                    <div class="pack-info">
+                      <div class="pack-price">$2</div>
+                      <div class="pack-coins">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>500,000
+                      </div>
+                    </div>
+                    <button class="pack-cta">Purchase</button>
+                  </div>
+
+                  <div class="wzs-pack">
+                    <div class="pack-info">
+                      <div class="pack-price">$5</div>
+                      <div class="pack-coins">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>1,250,000
+                      </div>
+                    </div>
+                    <button class="pack-cta">Purchase</button>
+                  </div>
+
+                  <div class="wzs-pack">
+                    <div class="pack-info">
+                      <div class="pack-price">$10</div>
+                      <div class="pack-coins">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>2,500,000
+                      </div>
+                    </div>
+                    <button class="pack-cta">Purchase</button>
+                  </div>
+
+                  <div class="wzs-pack">
+                    <div class="pack-info">
+                      <div class="pack-price">$15</div>
+                      <div class="pack-coins">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>3,750,000
+                      </div>
+                    </div>
+                    <button class="pack-cta">Purchase</button>
+                  </div>
+
+                  <div class="wzs-pack">
+                    <div class="pack-info">
+                      <div class="pack-price">$20</div>
+                      <div class="pack-coins">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>5,000,000
+                      </div>
+                    </div>
+                    <button class="pack-cta">Purchase</button>
+                  </div>
+
+                  <div class="wzs-pack">
+                    <div class="pack-info">
+                      <div class="pack-price">$30</div>
+                      <div class="pack-coins">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>7,500,000
+                      </div>
+                    </div>
+                    <button class="pack-cta">Purchase</button>
+                  </div>
+
+                  <div class="wzs-pack">
+                    <div class="pack-info">
+                      <div class="pack-price">$50</div>
+                      <div class="pack-coins">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>12,500,000
+                      </div>
+                    </div>
+                    <button class="pack-cta">Purchase</button>
+                  </div>
+                  <div class="wzs-pack">
+                    <div class="pack-info">
+                      <div class="pack-price">$50</div>
+                      <div class="pack-coins">
+                        <img src="/img/Coin.png" class="coin-ico" alt=""/>20,000,000
+                      </div>
+                    </div>
+                    <button class="pack-cta">Purchase</button>
+                  </div>
+                </div>
+
+                <div class="wzs-pay-foot">
+                  <div class="wzs-pay-note">
+                    Secure payment • Instant delivery
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+ <!-- BANNED POPUP -->
+ <div id="wzBanned" class="wz-ban" role="alertdialog" aria-modal="true" aria-hidden="true" aria-labelledby="wzBanTitle" aria-describedby="wzBanMsg">
+ <div class="wz-ban-inner">
+   <img src="/img/banned.webp" class="wz-banned-img" alt="">
+   <div class="wz-ban-title" id="wzBanTitle">BANNED</div>
+   <p class="wz-ban-msg" id="wzBanMsg">
+     Your account has been banned for violating the game rules.
+   </p>
+   <div class="wz-ban-foot">
+     <div class="foot-center socials">
+       <a href="https://www.youtube.com/@wormzilla.iofficial" aria-label="YouTube"><img class="social-icon" src="/img/youtube.webp" alt=""/></a>
+       <a href="https://discord.gg/RUMVwCnJY6" aria-label="Discord"><img class="social-icon" src="/img/discord.webp" alt=""/></a>
+       <a href="https://t.me/Wormzillaiooffical" aria-label="Telegram"><img class="social-icon" src="/img/telegram.webp" alt=""/></a>
+       <a href="https://www.tiktok.com/@wormzilla.io?_r=1" aria-label="TikTok"><img class="social-icon" src="/img/tiktok.webp" alt=""/></a>
+     </div>
+     <div class="foot-right">
+      
+       <a class="support-mail" href="/cdn-cgi/l/email-protection#98ebede8e8f7eaecd8eff7eaf5e2f1f4f4f9b6f1f7"><span class="__cf_email__" data-cfemail="394a4c4949564b4d794e564b544350555558175056">[email&#160;protected]</span></a>
+     </div>
+   </div>
+ </div>
+</div>
+
+
+
+
+
+
+        <!-- ========= SITE FOOTER ========= -->
+
+        <footer class="site-footer">
+          <div class="footer-inner">
+            <div class="foot-left">
+              © 2024 WORMZILLA.io — All rights reserved
+            </div>
+            <div class="foot-links">
+              <a href="/privacy.html" target="_blank" class="foot-link">Privacy Policy</a>
+              <a href="/terms.html" target="_blank" class="foot-link">Terms of Use</a>
+            </div>
+            <div class="foot-center socials">
+              <a href="https://www.youtube.com/@wormzilla.iofficial" aria-label="YouTube"><img class="social-icon" src="/img/youtube.webp" alt=""/></a>
+              <a href="https://discord.gg/RUMVwCnJY6" aria-label="Discord"><img class="social-icon" src="/img/discord.webp" alt=""/></a>
+              <a href="https://t.me/Wormzillaiooffical" aria-label="Telegram"><img class="social-icon" src="/img/telegram.webp" alt=""/></a>
+              <a href="https://www.tiktok.com/@wormzilla.io?_r=1" aria-label="TikTok"><img class="social-icon" src="/img/tiktok.webp" alt=""/></a>
+            </div>
+            <div class="foot-right">
+              <a class="footer-site-link" href="https://wormzilla.io/site/" target="_blank" rel="noopener noreferrer">WEB-SKINLAB</a>
+              <a class="support-mail" href="/cdn-cgi/l/email-protection#43303633332c313703342c312e392a2f2f226d2a2c"><span class="__cf_email__" data-cfemail="9deee8ededf2efe9ddeaf2eff0e7f4f1f1fcb3f4f2">[email&#160;protected]</span></a>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==== GAME OVER OVERLAY ==== -->
+  <div class="wz-go" id="gameOver">
+    <div class="wz-go-dim"></div>
+
+    <div class="wz-go-modal">
+      <div class="wz-go-head">
+        <h3>Congratulations!</h3>
+        <div class="wz-go-chip" id="wzGoTop">TOP 7</div>
+      </div>
+
+      <div class="wz-go-body">
+        <div class="wz-go-score">
+          <div class="lbl">Total Score</div>
+          <div class="val" id="wzGoScore">1,245,600</div>
+        </div>
+        <div class="wz-go-actions">
+          <button id="result-continue" class="wz-go-btn pri">Continue</button>
+          <button id="result-play-again" class="wz-go-btn sec">PLAY AGAIN</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wz-go-adbar">
+      <div class="ad-label">ADVERTISEMENT</div>
+      <div class="ad-slot">
+        <div class="ad-ph">Your 400px Ad Area</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR / CONNECTION POPUP  -->
+
+  <div id="wz-error" class="wz-err" aria-hidden="true">
+    <div class="wz-err-dim"></div>
+
+    <div class="wz-err-modal" role="alertdialog" aria-labelledby="wzErrTitle" aria-describedby="wzErrMsg">
+      <div class="wz-err-head">
+        <div class="wz-err-ico" aria-hidden="true">
+          <svg viewbox="0 0 24 24">
+            <path d="M12 3 L22 21 H2 Z M12 9 v5 M12 18 h.01"/>
+          </svg>
+        </div>
+        <h3 id="wzErrTitle">Something went wrong</h3>
+        <!-- no close button -->
+      </div>
+
+      <div class="wz-err-body" id="wzErrMsg">
+        <p>You’ve encountered an error.</p>
+        <ul class="wz-err-tips">
+          <li>Please check your internet connection.</li>
+          <li>
+            If you’re using an ad blocker, please disable it for Wormzilla.
+          </li>
+          <li>If the connection dropped, try again.</li>
+          <li>if you keep getting this error you might be rate limited, please try again in 30 seconds.</li>
+        </ul>
+
+        <div class="wz-err-code" aria-live="polite">
+          <span class="lbl">Error Code:</span>
+          <span class="val" id="wzErrCode">NET-000</span>
+        </div>
+      </div>
+
+      <div class="wz-err-actions">
+        <a class="wz-btn pri" id="wzErrRetry" role="button">Retry</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- POPUP BUY -->
+  <div id="wzsQuickPay" class="wzp" aria-hidden="true">
+    <div class="wzp-dim" data-close></div>
+    <div class="wzp-panel" role="dialog" aria-modal="true" aria-labelledby="wzpTitle">
+      <div class="wzp-head">
+        <h4 id="wzpTitle">Quick Purchase</h4>
+        <button class="wzp-close" data-close aria-label="Close">✕</button>
+      </div>
+
+      <div class="wzp-body">
+        <div class="wzp-feature-grid">
+          <div class="wzp-card">
+            <div class="wzp-card-top">
+              <img src="/img/gg.webp" class="wzp-ico" alt=""/>
+              <div class="wzp-title">VIP Membership</div>
+            </div>
+            <div class="wzp-desc">30 Days Premium</div>
+            <div class="wzp-price">$5</div>
+            <button class="wzp-cta" id="wzsVipBuy">Purchase</button>
+          </div>
+
+          <div class="wzp-card">
+            <div class="wzp-card-top">
+              <img src="/img/nw.webp" class="wzp-ico" alt=""/>
+              <div class="wzp-title">Name Change Token</div>
+            </div>
+            <div class="wzp-desc">Change your nickname once</div>
+            <div class="wzp-price">$3</div>
+            <button class="wzp-cta" id="wzsNameBuy">Purchase</button>
+          </div>
+        </div>
+
+        <h5 class="wzp-sec">Coins</h5>
+        <div class="wzp-pack-grid">
+          <div class="wzp-pack">
+            <div class="pack-info">
+              <div class="pack-price">$2</div>
+              <div class="pack-coins">
+                <img src="/img/Coin.png" class="coin-ico" alt=""/>500,000
+              </div>
+            </div>
+            <button class="pack-cta">Purchase</button>
+          </div>
+          <div class="wzp-pack">
+            <div class="pack-info">
+              <div class="pack-price">$5</div>
+              <div class="pack-coins">
+                <img src="/img/Coin.png" class="coin-ico" alt=""/>1,250,000
+              </div>
+            </div>
+            <button class="pack-cta">Purchase</button>
+          </div>
+          <div class="wzp-pack">
+            <div class="pack-info">
+              <div class="pack-price">$10</div>
+              <div class="pack-coins">
+                <img src="/img/Coin.png" class="coin-ico" alt=""/>2,500,000
+              </div>
+            </div>
+            <button class="pack-cta">Purchase</button>
+          </div>
+          <div class="wzp-pack">
+            <div class="pack-info">
+              <div class="pack-price">$15</div>
+              <div class="pack-coins">
+                <img src="/img/Coin.png" class="coin-ico" alt=""/>3,750,000
+              </div>
+            </div>
+            <button class="pack-cta">Purchase</button>
+          </div>
+          <div class="wzp-pack">
+            <div class="pack-info">
+              <div class="pack-price">$20</div>
+              <div class="pack-coins">
+                <img src="/img/Coin.png" class="coin-ico" alt=""/>5,000,000
+              </div>
+            </div>
+            <button class="pack-cta">Purchase</button>
+          </div>
+          <div class="wzp-pack">
+            <div class="pack-info">
+              <div class="pack-price">$30</div>
+              <div class="pack-coins">
+                <img src="/img/Coin.png" class="coin-ico" alt=""/>7,500,000
+              </div>
+            </div>
+            <button class="pack-cta">Purchase</button>
+          </div>
+          <div class="wzp-pack">
+            <div class="pack-info">
+              <div class="pack-price">$50</div>
+              <div class="pack-coins">
+                <img src="/img/Coin.png" class="coin-ico" alt=""/>12,500,000
+              </div>
+            </div>
+            <button class="pack-cta">Purchase</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="wzp-foot">
+        <div class="wzp-note">Secure payment • Instant delivery</div>
+      </div>
+    </div>
+  </div>
+  <!-- NAME CHANGE POPUP  -->
+  <div id="wzNameChange" class="wz-nc" aria-hidden="true">
+    <div class="wz-nc-dim" data-close></div>
+    <div class="wz-nc-modal">
+      <div class="wz-nc-head">
+        <div class="wz-nc-ico">
+          <svg viewbox="0 0 24 24">
+            <path d="M3 7h18M6 12h12M9 17h6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>Change Nickname</h3>
+        <button class="wz-nc-x" data-close>&times;</button>
+      </div>
+
+      <div class="wz-nc-body">
+        <label class="wz-nc-lab" for="ncName">New Nickname</label>
+        <input id="ncName" class="wz-nc-field" type="text" maxlength="20" placeholder="Type your new name"/>
+        <div id="turnstile-nick-container" style="display:none"></div>
+        <div class="wz-nc-error" id="ncError">This nick is unavailable.</div>
+        <button class="wz-nc-submit" id="ncSubmit" disabled>
+          Use 1 Token &amp; Change
+        </button>
+
+      
+      </div>
+    </div>
+  </div>
+  <script>window.turnstile={render:function(){return "bypassed"},reset:function(){}};</script>
+  <script>window.google={accounts:{id:{initialize:function(){},renderButton:function(){},prompt:function(){}}}};</script>
+  <script async="async" type="text/javascript" src="/js/5sMneC.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+{
+    "short_name": "wormzilla.io",
+    "name": "wormzilla.io",
+    "icons": [
+      {
+        "src": "/img/favicon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      },
+      {
+        "src": "/img/favicon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }
+    ],
+    "start_url": ".",
+    "display": "fullscreen",
+    "theme_color": "black",
+    "background_color": "black",
+    "orientation": "landscape-primary"
+  }
