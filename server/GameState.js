@@ -42,7 +42,8 @@ function randInt(min, max) {
 }
 
 // Food types (0-based, client has multiple visual types)
-const FOOD_TYPES = [0, 1, 2, 3, 4, 5];
+// Matches portionDict keys 0-33 from registry.wormzilla (200-207 reserved for special/ability portions)
+const FOOD_TYPES = Array.from({ length: 34 }, (_, i) => i); // [0..33]
 
 class Food {
   constructor() {
@@ -181,14 +182,19 @@ class GameState {
   }
 
   update() {
+    const eatenWithEater = []; // [foodId, eaterId]
     for (const w of this.worms.values()) {
       if (!w.alive) continue;
       w.update(1);
-      this._checkFoodCollision(w);
+      const eaten = this._checkFoodCollision(w);
+      for (const [, food] of eaten) {
+        eatenWithEater.push([food.id, w.id]);
+      }
     }
     // Replenish food
     const deficit = Math.min(200, 5000 - this.foods.size);
     if (deficit > 0) this.spawnBatch(deficit);
+    return { eatenWithEater };
   }
 
   _checkFoodCollision(worm) {
