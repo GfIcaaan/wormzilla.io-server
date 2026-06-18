@@ -261,16 +261,17 @@ class WorldState {
     return bodyFoods;
   }
 
-  // Sorted by headshot count, not score -- client's two leaderboard panels
-  // (hr/"HS" and Mi/"RECORD" in 0tEwHoKWpm.js) are labeled "Headshot list"
-  // and "Headshot record list" in index.html's settings panel (#hsList /
-  // #hsRecList checkboxes), and both read their per-entry number straight
-  // off this same list (sendInit's leaderboard section feeds "RECORD",
-  // buildUpdatePacket's section 10 feeds "HS" -- see gameServer.js). There
-  // is no separate score-based ranking in this protocol's leaderboard
-  // sections, so this must be headshot-ranked to match what the client
-  // actually labels these panels as.
+  // Sorted by kb (worm length) -- used for the main scoreboard panel (opcode 3 gd entries).
   getTopPlayers(n = 10) {
+    return Array.from(this.players.values())
+      .filter(p => !p.dead && !p.spectating)
+      .sort((a, b) => b.kb - a.kb)
+      .slice(0, n);
+  }
+
+  // Sorted by headshot count -- used for HS panel (Section 10 opcode 1) and
+  // RECORD panel (opcode 0 init).
+  getTopByHeadshots(n = 10) {
     return Array.from(this.players.values())
       .filter(p => !p.dead && !p.spectating)
       .sort((a, b) => b.sessionHeadshots - a.sessionHeadshots)
