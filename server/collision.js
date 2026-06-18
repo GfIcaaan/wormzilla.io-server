@@ -68,7 +68,7 @@ function checkFoodCollision(player, world) {
     // Grow player
     const value = food.isBodyFood
       ? Math.max(0.002, food.sizeTier * 0.008)
-      : cfg.FOOD_VALUE;
+      : (Math.floor(Math.random() * 5) + 5000) / 50; // random 1-5 score (kb unit)
     player.kb += value;
   }
   return eaten.length;
