@@ -178,6 +178,16 @@ function handleJoin(ws, reader) {
   sendInit(ws, player);
   sendInventory(ws, player);
 
+  // Let every already-connected client know the online count changed too
+  // (their own xi would otherwise stay frozen at whatever it was when THEY
+  // joined, since opcode 3 is the only place the client ever reads it from).
+  const onlinePacket = buildInventoryPacket();
+  for (const p of world.players.values()) {
+    if (p.id === player.id) continue; // already covered by sendInventory above
+    if (!p.ws || p.ws.readyState !== WebSocket.OPEN) continue;
+    try { p.ws.send(onlinePacket); } catch {}
+  }
+
   console.log(`[Game] Player joined: ${username} (id=${player.id}, total=${world.players.size})`);
 }
 
@@ -191,6 +201,10 @@ function handlePlayerDisconnect(player) {
   }
   world.removePlayer(player.id);
   console.log(`[Game] Player disconnected: ${player.username} (id=${player.id})`);
+
+  // Same reasoning as in handleJoin: the remaining clients' xi needs to
+  // reflect this player leaving too.
+  broadcastOnlineCount();
 }
 
 // ─── Game Tick ─────────────────────────────────────────────────────────────
@@ -384,7 +398,11 @@ function sendInit(ws, player) {
 
   for (const p of topPlayers) {
     w.writeUint8(p.role);
-    w.writeInt16(p.getScore());
+    // "RECORD" panel (Mi in client) -- labeled "Headshot record list" in
+    // index.html's settings. Same headshot-count field as the live "HS"
+    // panel (Section 10 of buildUpdatePacket), since this protocol has no
+    // separate score-ranked leaderboard section -- see getTopPlayers().
+    w.writeInt16(p.sessionHeadshots);
     w.writeUint8(p.username.length);
     w.writeString(p.username);
   }
@@ -393,15 +411,41 @@ function sendInit(ws, player) {
 }
 
 // ─── OPCODE 3: Inventory ───────────────────────────────────────────────────
-
-function sendInventory(ws, player) {
+//
+// Client's parser for this opcode is jk() (0tEwHoKWpm.js): reads xi = g.ia()
+// (Int16) then mf = g.ia() (Int16), then a food-slot list and (VIP-only) a
+// Wd-slot list. xi is rendered verbatim as the "(N online)" HUD text
+// (F.w.h.xi, see the `(${F.w.h.xi} online)` template literal in the same
+// file) -- there is no other opcode/field the client ever reads online
+// count from. It was previously hardcoded to 0 here, which is why the HUD
+// always showed "(0 online)" regardless of how many players were actually
+// connected. Send the real connected-player count instead.
+function buildInventoryPacket() {
   const w = new BinaryWriter(32);
   w.writeUint8(3);
-  w.writeInt16(0);  // xi
+  w.writeInt16(world.players.size);  // xi -- online player count
   w.writeInt16(0);  // mf
   w.writeUint8(0);  // food count (x.gd)
   w.writeUint8(0);  // Wd count
-  ws.send(w.toBuffer());
+  return w.toBuffer();
+}
+
+function sendInventory(ws, player) {
+  ws.send(buildInventoryPacket());
+}
+
+// Broadcasts the current online count (opcode 3) to every connected client.
+// Needed because xi is only ever pushed to the client inside this opcode --
+// it's not part of the per-tick update packet (opcode 1) -- so without a
+// broadcast here, every already-connected client would keep showing the
+// online count from the moment THEY joined, never reflecting players who
+// join or leave afterwards.
+function broadcastOnlineCount() {
+  const packet = buildInventoryPacket();
+  for (const p of world.players.values()) {
+    if (!p.ws || p.ws.readyState !== WebSocket.OPEN) continue;
+    try { p.ws.send(packet); } catch {}
+  }
 }
 
 // ─── OPCODE 1: Game State Update ───────────────────────────────────────────
@@ -574,11 +618,12 @@ function buildUpdatePacket(me, topPlayers, dt) {
   // Section 9: Server dots (minimap dots - simplified)
   w.writeVarInt(0);
 
-  // Section 10: Top 10 leaderboard
+  // Section 10: Top 10 leaderboard ("HS" panel -- "Headshot list" in
+  // index.html's settings, ranked by headshot count per getTopPlayers()).
   w.writeUint8(topPlayers.length);
   for (const p of topPlayers) {
     w.writeUint16(p.id & 0xFFFF);
-    w.writeUint16(Math.max(0, Math.min(65535, p.getScore())) & 0xFFFF);
+    w.writeUint16(Math.max(0, Math.min(65535, p.sessionHeadshots)) & 0xFFFF);
     w.writeUint8(p.role);
   }
 
