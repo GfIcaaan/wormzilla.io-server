@@ -273,7 +273,7 @@ function updatePlayerMovement(player) {
   // Normalize to [-π, π]
   while (diff > Math.PI) diff -= 2 * Math.PI;
   while (diff < -Math.PI) diff += 2 * Math.PI;
-  const turnRate = 0.15;
+  const turnRate = 0.30;
   player.angle += diff * turnRate;
 
   // Speed scales with the worm's own current segment spacing (jb), not a
@@ -282,7 +282,7 @@ function updatePlayerMovement(player) {
   // (below), so head-distance-per-tick IS the gap between segments, and that
   // gap must track jb for a 10-segment worm and a 200-segment worm to both
   // move at "one segment-length per tick" instead of one fixed distance.
-  const jb = segmentSpacing(player.kb);
+  const jb = segmentSpacing(cfg.INITIAL_LENGTH); // fixed: all worms same speed
 
   // Boost
   if (player.inputBoosting && player.kb > cfg.BOOST_MIN_LENGTH) {
