@@ -54,16 +54,16 @@ module.exports = {
   // absolute speeds to both look like "one segment-length per tick", which a
   // fixed BASE_SPEED constant could never satisfy for both sizes at once.
   // These are now multipliers on the worm's own current jb, not fixed units:
-  BASE_SPEED_FACTOR: 1.0,   // 1.0x jb per tick = head advances exactly one segment-spacing
-  BOOST_SPEED_FACTOR: 2.0,  // 2x jb per tick while boosting
+  BASE_SPEED_FACTOR: 2.5,   // 1.0x jb per tick = head advances exactly one segment-spacing
+  BOOST_SPEED_FACTOR: 5,  // 2x jb per tick while boosting
   BOOST_COST: 0.003,
   
   // Worm
-  // Initial kb chosen so worm spawns with ~10 segments (visible but small).
-  // calcSegmentCount(2.1) ≈ 10 with ef=4000, Og=7000.
-  INITIAL_LENGTH: 2.1,
-  MIN_LENGTH: 0.25,
-  BOOST_MIN_LENGTH: 1.0,
+  // Initial kb chosen so worm spawns with score 12 (kb * 50 = 12 → kb = 0.24).
+  // calcSegmentCount(0.24) returns 3 (minimum), giving a tiny starting worm.
+  INITIAL_LENGTH: 0.24,
+  MIN_LENGTH: 0.20,
+  BOOST_MIN_LENGTH: 0.24,
   // ef and Og must match client defaults (from client source: lh=500, ef=4e3, Og=7e3)
   SCALE_THRESHOLD: 4000,
   GROWTH_FACTOR: 7000,
