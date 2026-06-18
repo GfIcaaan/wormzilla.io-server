@@ -148,22 +148,35 @@ function handleJoin(ws, reader) {
   const custom_color = reader.readUint32();
   const role       = reader.readUint8();
 
-  // Read username
-  let username = '';
+  // The client sends its session token (D["1ak"]) as the string field in the
+  // join packet -- NOT a display name.  Look it up in the DB to get the real
+  // username.  Fall back to 'Guest' only if the token is unknown or absent.
+  let tokenStr = '';
   while (reader.bytesLeft >= 2) {
-    username += String.fromCharCode(reader.readUint16());
-    if (username.length > 2048) break;
+    tokenStr += String.fromCharCode(reader.readUint16());
+    if (tokenStr.length > 2048) break;
   }
-  username = username.trim() || 'Guest';
+  tokenStr = tokenStr.trim();
 
-  // For demo, we accept any join (token validation via /api/start_game pre-check)
-  // In production you'd verify a session key here
+  let username = 'Guest';
+  let userId = null;
+  let resolvedRole = role;
+  if (tokenStr) {
+    try {
+      const user = db.findByToken(tokenStr);
+      if (user && !user.is_banned) {
+        username = user.username || 'Guest';
+        userId   = user.user_id;
+        resolvedRole = user.role ?? role;
+      }
+    } catch {}
+  }
 
   const player = new Player({
-    userId: null,
-    token: null,
+    userId,
+    token: tokenStr || null,
     username,
-    role,
+    role: resolvedRole,
     skin_id, eyes_id, mouth_id, hat_id, glasses_id,
     zoom, custom_color,
     ws,
@@ -174,18 +187,18 @@ function handleJoin(ws, reader) {
 
   world.addPlayer(player);
 
+  const topPlayers = world.getTopPlayers(10);
+
   // Send init packet
   sendInit(ws, player);
-  sendInventory(ws, player);
+  sendInventory(ws, player, topPlayers);
 
-  // Let every already-connected client know the online count changed too
-  // (their own xi would otherwise stay frozen at whatever it was when THEY
-  // joined, since opcode 3 is the only place the client ever reads it from).
-  const onlinePacket = buildInventoryPacket();
+  // Let every already-connected client know the online count + scoreboard changed.
+  // Each client gets a personalised packet (myRank differs per player).
   for (const p of world.players.values()) {
     if (p.id === player.id) continue; // already covered by sendInventory above
     if (!p.ws || p.ws.readyState !== WebSocket.OPEN) continue;
-    try { p.ws.send(onlinePacket); } catch {}
+    try { p.ws.send(buildInventoryPacket(topPlayers, p)); } catch {}
   }
 
   console.log(`[Game] Player joined: ${username} (id=${player.id}, total=${world.players.size})`);
@@ -202,9 +215,9 @@ function handlePlayerDisconnect(player) {
   world.removePlayer(player.id);
   console.log(`[Game] Player disconnected: ${player.username} (id=${player.id})`);
 
-  // Same reasoning as in handleJoin: the remaining clients' xi needs to
-  // reflect this player leaving too.
-  broadcastOnlineCount();
+  // Same reasoning as in handleJoin: the remaining clients' xi and scoreboard
+  // need to reflect this player leaving too.
+  broadcastOnlineCount(world.getTopPlayers(10));
 }
 
 // ─── Game Tick ─────────────────────────────────────────────────────────────
@@ -362,22 +375,26 @@ function tickAbilities(player) {
 // ─── Broadcast ─────────────────────────────────────────────────────────────
 
 function broadcastUpdate(dt) {
-  const topPlayers = world.getTopPlayers(10);
+  const topPlayers = world.getTopPlayers(10);        // scoreboard: by kb
+  const hsTop     = world.getTopByHeadshots(10);     // HS panel: by headshots
 
   for (const player of world.players.values()) {
     if (!player.ws || player.ws.readyState !== WebSocket.OPEN) continue;
     try {
-      const packet = buildUpdatePacket(player, topPlayers, dt);
+      const packet = buildUpdatePacket(player, topPlayers, hsTop, dt);
       player.ws.send(packet);
     } catch {}
   }
 
-  // Minimap every 5 ticks
+  // Scoreboard (opcode 3) + minimap every 5 ticks.
   if (world.tickNumber % cfg.MINIMAP_TICK_INTERVAL === 0) {
     const minimapPacket = buildMinimapPacket();
     for (const player of world.players.values()) {
       if (!player.ws || player.ws.readyState !== WebSocket.OPEN) continue;
-      try { player.ws.send(minimapPacket); } catch {}
+      try {
+        player.ws.send(minimapPacket);
+        player.ws.send(buildInventoryPacket(topPlayers, player));
+      } catch {}
     }
   }
 }
@@ -385,24 +402,20 @@ function broadcastUpdate(dt) {
 // ─── OPCODE 0: Init ────────────────────────────────────────────────────────
 
 function sendInit(ws, player) {
-  const topPlayers = world.getTopPlayers(10);
+  const hsTop = world.getTopByHeadshots(10);  // RECORD panel = ranked by headshots
   const w = new BinaryWriter(512);
 
-  w.writeUint8(0);          // opcode
-  w.writeUint8(0);          // game_mode (normal)
-  w.writeInt16(player.id);          // my own player/client id (eb)
-  w.writeFloat32(cfg.WORLD_HALF);       // lh -- world radius (used to decode packed food/worm positions and for the death-zoom circle)
-  w.writeFloat32(cfg.SCALE_THRESHOLD);  // ef
-  w.writeFloat32(cfg.GROWTH_FACTOR);    // Og
-  w.writeUint8(topPlayers.length);
+  w.writeUint8(0);
+  w.writeUint8(0);
+  w.writeInt16(player.id);
+  w.writeFloat32(cfg.WORLD_HALF);
+  w.writeFloat32(cfg.SCALE_THRESHOLD);
+  w.writeFloat32(cfg.GROWTH_FACTOR);
+  w.writeUint8(hsTop.length);
 
-  for (const p of topPlayers) {
+  for (const p of hsTop) {
     w.writeUint8(p.role);
-    // "RECORD" panel (Mi in client) -- labeled "Headshot record list" in
-    // index.html's settings. Same headshot-count field as the live "HS"
-    // panel (Section 10 of buildUpdatePacket), since this protocol has no
-    // separate score-ranked leaderboard section -- see getTopPlayers().
-    w.writeInt16(p.sessionHeadshots);
+    w.writeInt16(p.sessionHeadshots);  // RECORD panel shows headshot count
     w.writeUint8(p.username.length);
     w.writeString(p.username);
   }
@@ -412,45 +425,61 @@ function sendInit(ws, player) {
 
 // ─── OPCODE 3: Inventory ───────────────────────────────────────────────────
 //
-// Client's parser for this opcode is jk() (0tEwHoKWpm.js): reads xi = g.ia()
-// (Int16) then mf = g.ia() (Int16), then a food-slot list and (VIP-only) a
-// Wd-slot list. xi is rendered verbatim as the "(N online)" HUD text
-// (F.w.h.xi, see the `(${F.w.h.xi} online)` template literal in the same
-// file) -- there is no other opcode/field the client ever reads online
-// count from. It was previously hardcoded to 0 here, which is why the HUD
-// always showed "(0 online)" regardless of how many players were actually
-// connected. Send the real connected-player count instead.
-function buildInventoryPacket() {
-  const w = new BinaryWriter(32);
+// Client parser jk() reads:
+//   xi  = g.ia() = Int16  -- online count (HUD "(N online)" text)
+//   mf  = g.ia() = Int16  -- my rank on the scoreboard (0 = not in top list)
+//   P   = g.f()  = Int8   -- gd entry count (main scoreboard entries)
+//   per entry:
+//     Ki = g.ia() = Int16    -- player id (looked up in xb[] for name display)
+//     Kb = g.n()  = Float32  -- score displayed (Math.floor(Kb) shown in panel)
+//   Wd count + entries (VIP mode only, always 0 here)
+//
+// The main SCOREBOARD panel is driven entirely by gd entries here.  If count=0
+// the scoreboard is always blank.  We send the current top-10 list so the
+// panel shows live rankings.
+//
+// Score value: Ze() sets worm.Kb = 50 * h (h = raw kb float from nl/yl), so
+// all score displays show 50*kb.  We mirror that here: Math.floor(kb * 50).
+function buildInventoryPacket(topPlayers, me) {
+  const entries = topPlayers || [];
+  // my rank (1-based; 0 = not in the top list)
+  let myRank = 0;
+  if (me) {
+    const idx = entries.findIndex(p => p.id === me.id);
+    myRank = idx >= 0 ? idx + 1 : 0;
+  }
+
+  const w = new BinaryWriter(32 + entries.length * 8);
   w.writeUint8(3);
-  w.writeInt16(world.players.size);  // xi -- online player count
-  w.writeInt16(0);  // mf
-  w.writeUint8(0);  // food count (x.gd)
-  w.writeUint8(0);  // Wd count
+  w.writeInt16(world.players.size);   // xi -- online player count
+  w.writeInt16(myRank);               // mf -- my rank (Int16)
+  w.writeInt8(entries.length);        // gd count (Int8 signed, g.f() = getInt8)
+  for (const p of entries) {
+    w.writeInt16(p.id);                         // Ki -- player id (Int16)
+    w.writeFloat32(Math.floor(p.kb * 50));      // Kb -- score (Float32)
+  }
+  w.writeUint8(0); // Wd count (VIP mode only, always 0)
   return w.toBuffer();
 }
 
-function sendInventory(ws, player) {
-  ws.send(buildInventoryPacket());
+function sendInventory(ws, player, topPlayers) {
+  ws.send(buildInventoryPacket(topPlayers, player));
 }
 
-// Broadcasts the current online count (opcode 3) to every connected client.
-// Needed because xi is only ever pushed to the client inside this opcode --
-// it's not part of the per-tick update packet (opcode 1) -- so without a
-// broadcast here, every already-connected client would keep showing the
-// online count from the moment THEY joined, never reflecting players who
-// join or leave afterwards.
-function broadcastOnlineCount() {
-  const packet = buildInventoryPacket();
+// Broadcasts the current online count + scoreboard (opcode 3) to every client.
+// xi and the gd scoreboard list are only ever pushed inside this opcode --
+// not in the per-tick update packet -- so without a broadcast here every
+// already-connected client would see stale data.
+function broadcastOnlineCount(topPlayers) {
   for (const p of world.players.values()) {
     if (!p.ws || p.ws.readyState !== WebSocket.OPEN) continue;
-    try { p.ws.send(packet); } catch {}
+    try { p.ws.send(buildInventoryPacket(topPlayers, p)); } catch {}
   }
 }
 
 // ─── OPCODE 1: Game State Update ───────────────────────────────────────────
 
-function buildUpdatePacket(me, topPlayers, dt) {
+function buildUpdatePacket(me, topPlayers, hsTop, dt) {
   const w = new BinaryWriter(8192);
 
   w.writeUint8(1);
@@ -618,32 +647,37 @@ function buildUpdatePacket(me, topPlayers, dt) {
   // Section 9: Server dots (minimap dots - simplified)
   w.writeVarInt(0);
 
-  // Section 10: Top 10 leaderboard ("HS" panel -- "Headshot list" in
-  // index.html's settings, ranked by headshot count per getTopPlayers()).
-  w.writeUint8(topPlayers.length);
-  for (const p of topPlayers) {
+  // Section 10: Top 10 leaderboard -- HS panel shows headshot count per player.
+  w.writeUint8(hsTop.length);
+  for (const p of hsTop) {
     w.writeUint16(p.id & 0xFFFF);
-    w.writeUint16(Math.max(0, Math.min(65535, p.sessionHeadshots)) & 0xFFFF);
+    w.writeUint16(Math.min(65535, p.sessionHeadshots));
     w.writeUint8(p.role);
   }
 
-  // Section 11: My player data. NOTE: contrary to the comment that used to be
-  // here, the client's update-packet parser (Yj) DOES read this section via
-  // this.yl(g) -- it's just skipped for the very first packet after connecting
-  // (this.vj starts at 0, and yl is only called when "0 < x" where x is that
-  // per-connection tick counter), then read on every packet after that.
-  // yl()'s field order is: flags(Int8) -> [conditional fields only if bit1/bit2
-  // of flags are set, which they never are here] -> headX(Float32) ->
-  // headY(Float32) -> food_nearby_x(Float32) -> food_nearby_y(Float32) ->
-  // activeAbilityCount(VarInt) -> count * [type(Int8), charge(Int8)].
-  // There is NO byte between headY and food_nearby_x. The previous code wrote
-  // an extra writeUint8(me.inputBoosting ...) there, which doesn't exist in
-  // yl()'s read order -- every byte from food_nearby_x onward (including the
-  // active-abilities list) was being read 1 byte off for the player's own
-  // worm on every tick after the first.
-  let myFlags = 0;
-  if (me.inputBoosting) myFlags |= 0x01;
-  w.writeUint8(myFlags);
+  // Section 11: My player data (yl() in client).
+  // yl() read order (verified from 0tEwHoKWpm.js):
+  //   I = g.f()          -- Int8 flags
+  //   if (2 & I):
+  //     P.Ze(g.n())      -- Float32 new worm length (kb); Ze() stores: this.Kb = 50*h
+  //   if (4 & I):
+  //     this.h.Hi = g.n() -- Float32 (zoom/scale hint, unused server-side)
+  //   R = g.n()          -- Float32 headX
+  //   I = g.n()          -- Float32 headY
+  //   P.Ci(R, I, w)      -- move worm (w = boosting flag from bit0)
+  //   k.cf[0] = g.n()    -- Float32 food_nearby_x
+  //   k.cf[1] = g.n()    -- Float32 food_nearby_y
+  //   w = this.kb(g)     -- VarInt active ability count
+  //   per ability: type (Int8), charge (Int8)
+  //
+  // BIT 1 (0x02) MUST always be set so Ze() is called every tick with the
+  // current kb value.  Without it the client never updates worm.Kb, which
+  // means the score HUD always shows 0 and the worm never visually grows.
+  // When bit1 is set, kb is read BEFORE headX -- order matters.
+  let myFlags = 0x02; // bit1: send kb; always on so score updates every tick
+  if (me.inputBoosting) myFlags |= 0x01; // bit0: boosting flag for Ci()
+  w.writeInt8(myFlags);
+  w.writeFloat32(me.kb);   // kb -- sent first because bit1 is set (Ze reads it here)
   w.writeFloat32(me.headX);
   w.writeFloat32(me.headY);
   w.writeFloat32(0); // food_nearby_x
@@ -653,15 +687,12 @@ function buildUpdatePacket(me, topPlayers, dt) {
   const activeAbilities = Object.values(me.abilities).filter(a => a.charge > 0);
   w.writeVarInt(activeAbilities.length);
   for (const ab of activeAbilities) {
-    w.writeUint8(ab.type);
-    w.writeUint8(ab.charge);
+    w.writeInt8(ab.type);
+    w.writeInt8(ab.charge);
   }
 
-  // Section 12: Other worm ability updates -- NOTE: client's Yj parser does
-  // not read anything after yl()/this.h.Cl(x, P) for this packet type, so
-  // this trailing VarInt(0) is never consumed. Harmless (unread trailing
-  // bytes are simply ignored by the client's DataView-based reader) but left
-  // as-is since removing it is not required for correctness.
+  // Section 12: trailing VarInt(0) -- never consumed by client's Yj parser
+  // (nothing is read after yl()), harmless.
   w.writeVarInt(0);
 
   return w.toBuffer();
